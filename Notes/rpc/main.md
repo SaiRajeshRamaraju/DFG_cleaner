@@ -11,8 +11,10 @@
 | **`METADATA_RESP`** | `0x13` | Head Server | Chunk count + list of assigned Chunk Server addresses & hashes | Head Server returns the blueprint required for the client to pull chunks. |
 | **`UPLOAD_CHUNK`** | `0x20` | Chunk Server | Chunk ID string + Raw binary block bytes | Client streams a 4MB file block directly to the assigned Chunk Server. |
 | **`UPLOAD_ACK`** | `0x21` | Chunk Server | Status code / Error string | Chunk Server confirms the block was written to disk and verified via SHA-256. |
-| **`DOWNLOAD_CHUNK`** | `0x22` | Chunk Server | Chunk ID string | Client requests a specific chunk block by ID. |
-| **`DOWNLOAD_RESP`** | `0x23` | Chunk Server | Raw binary block bytes stream | Chunk Server streams the requested block data back down the TCP pipe. |
+| **`CHUNK_REPLICATION`** | `0x22` | Chunk replication in chunk server | Uploading chunk with chunk hash streams from head server to cluster server. |
+| **`CHUNK_REPLICATION_ACK`**| `0x23`| Statu code / Error string | Status of the replication whether succeded in chunk server or not. |
+| **`DOWNLOAD_CHUNK`** | `0x24` | Chunk Server | Chunk ID string | Client requests a specific chunk block by ID. |
+| **`DOWNLOAD_RESP`** | `0x25` | Chunk Server | Raw binary block bytes stream | Chunk Server streams the requested block data back down the TCP pipe. |
 | **`DELETE_FILE`** | `0x30` | Chunk Server | Chunk ID string | Tells the Chunk Server to wipe a specific block file off its local SSD. |
 | **`DELETE_ACK`** | `0x31` | Chunk Server | Status code | Confirms the file block has been successfully deleted. |
 | **`ERROR_RESP`** | `0xFF` | Either | Error message string | Standardized failure response for checksum mismatches, missing chunks,delete failure, or disk full errors. |

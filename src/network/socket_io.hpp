@@ -1,25 +1,37 @@
 #pragma once
 
+#include <arpa/inet.h>
 #include <cstddef>
 #include <cstdint>
+#include <netinet/in.h>
 #include <string>
+#include <sys/socket.h>
 #include <vector>
 
 namespace dfg::net {
 
-struct IoResult {
-    bool        ok;
-    std::string error;
+// This abstraction help to use linux socket api little simlper for me.
+// I am passing address and port that need to connect to or run server on as
+// part of the constructor . I am still learning and hand writing majority of
+// this code so this maybe wrong or right. TODO: Need refactoring in future.
+class socket_io {
+private:
+  int fd;
+  int opt = 1;
 
-    static IoResult success()                 { return {true,  {}}; }
-    static IoResult fail(std::string msg)     { return {false, std::move(msg)}; }
-    explicit operator bool() const            { return ok; }
+public:
+  sockaddr_in server_addr;
+  socket_io(const std::string &ip, int port);
+  ~socket_io();
+  sockaddr_in client_addr{};
+  socklen_t client_len;
+
+  // Prevent accidental copying(so no two objects closes the same socket)
+
+  socket_io(const socket_io &) = delete;
+  socket_io &operator=(const socket_io &) = delete;
+
+  int connect_to();
+  int server_listen();
 };
-
-IoResult read_exact(int fd, void* buf, std::size_t len);
-IoResult write_exact(int fd, const void* buf, std::size_t len);
-IoResult read_into_vec(int fd, std::vector<uint8_t>& out, std::size_t len);
-IoResult set_nonblocking(int fd);
-IoResult set_reuseaddr(int fd);
-
 } // namespace dfg::net

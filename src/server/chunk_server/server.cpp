@@ -20,13 +20,13 @@ int run_chunk_server(uint16_t port, const std::string &storage_dir) {
   int listen_fd = ::socket(AF_INET, SOCK_STREAM, 0);
   if (listen_fd < 0) {
     std::cerr << "[Server] socket(): " << std::strerror(errno) << "\n";
-    return 1;
+    return -1;
   }
 
   if (auto r = dfg::net::set_reuseaddr(listen_fd); !r) {
     std::cerr << "[Server] " << r.error << "\n";
     ::close(listen_fd);
-    return 1;
+    return -1;
   }
 
   sockaddr_in addr{};
@@ -38,14 +38,14 @@ int run_chunk_server(uint16_t port, const std::string &storage_dir) {
       0) {
     std::cerr << "[Server] bind(): " << std::strerror(errno) << "\n";
     ::close(listen_fd);
-    return 1;
+    return -1;
   }
 
   constexpr int BACKLOG = 64;
   if (::listen(listen_fd, BACKLOG) < 0) {
     std::cerr << "[Server] listen(): " << std::strerror(errno) << "\n";
     ::close(listen_fd);
-    return 1;
+    return -1;
   }
 
   std::cerr << "[Server] chunk server listening on port " << port

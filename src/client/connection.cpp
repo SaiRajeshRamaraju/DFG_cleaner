@@ -82,25 +82,25 @@ int client::file_download(const std::string &hex_hash,
 
   int fd = connect_to(server_ip, port);
   if (fd < 0)
-    return 1;
+    return -1;
 
   auto hdr = make_header(MsgType::DOWNLOAD_CHUNK,
                          static_cast<uint64_t>(hex_hash.size()));
   if (auto w = write_exact(fd, &hdr, sizeof(hdr)); !w) {
     std::cerr << "[Client] failed to send download header: " << w.error << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
   if (auto w = write_exact(fd, hex_hash.data(), hex_hash.size()); !w) {
     std::cerr << "[Client] failed to send download hash: " << w.error << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   MessageHeader resp{};
   if (!read_response_header(fd, resp)) {
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   auto resp_type = static_cast<MsgType>(resp.msg_type);
@@ -110,14 +110,14 @@ int client::file_download(const std::string &hex_hash,
     read_response_payload(fd, resp, err_msg);
     std::cerr << "[Client] server error: " << err_msg << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   if (resp_type != MsgType::DOWNLOAD_RESP) {
     std::cerr << "[Client] unexpected response: " << msg_type_str(resp.msg_type)
               << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   std::vector<uint8_t> chunk;
@@ -126,7 +126,7 @@ int client::file_download(const std::string &hex_hash,
       !r) {
     std::cerr << "[Client] failed to read chunk data: " << r.error << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   std::string out_file = hex_hash + ".chunk";
@@ -134,7 +134,7 @@ int client::file_download(const std::string &hex_hash,
   if (!ofs) {
     std::cerr << "[Client] cannot create output file: " << out_file << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
   ofs.write(reinterpret_cast<const char *>(chunk.data()),
             static_cast<std::streamsize>(chunk.size()));
@@ -152,12 +152,12 @@ int client::file_upload(const std::string &file, const std::string &server_ip,
 
   int fd = connect_to(server_ip, port);
   if (fd < 0)
-    return 1;
+    return -1;
 
   std::ifstream ifs(file, std::ios::binary | std::ios::ate);
   if (!ifs) {
     std::cerr << "[Client] cannot open file: " << file << "\n";
-    return 1;
+    return -1;
   }
 
   auto size = ifs.tellg();
@@ -167,7 +167,7 @@ int client::file_upload(const std::string &file, const std::string &server_ip,
   ifs.read(reinterpret_cast<char *>(data.data()), size);
   if (!ifs.good() && !ifs.eof()) {
     std::cerr << "[Client] failed to read file: " << file << "\n";
-    return 1;
+    return -1;
   }
   ifs.close();
 
@@ -179,24 +179,24 @@ int client::file_upload(const std::string &file, const std::string &server_ip,
   if (auto w = write_exact(fd, &hdr, sizeof(hdr)); !w) {
     std::cerr << "[Client] failed to send upload header: " << w.error << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
   if (auto w = write_exact(fd, data.data(), data.size()); !w) {
     std::cerr << "[Client] failed to send upload payload: " << w.error << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   MessageHeader resp{};
   if (!read_response_header(fd, resp)) {
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   std::string payload;
   if (!read_response_payload(fd, resp, payload)) {
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   auto resp_type = static_cast<MsgType>(resp.msg_type);
@@ -205,12 +205,12 @@ int client::file_upload(const std::string &file, const std::string &server_ip,
   } else if (resp_type == MsgType::ERROR_RESP) {
     std::cerr << "[Client] server error: " << payload << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   } else {
     std::cerr << "[Client] unexpected response: " << msg_type_str(resp.msg_type)
               << "\n";
     ::close(fd);
-    return 1;
+    return -1;
   }
 
   ::close(fd);
