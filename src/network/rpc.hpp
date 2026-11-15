@@ -4,8 +4,6 @@
 #include <cstring>
 #include <string>
 
-namespace dfg::protocol {
-
 constexpr uint32_t DFG_MAGIC = 0xDF610026;
 
 enum class MsgType : uint8_t {
@@ -84,5 +82,3 @@ inline std::string msg_type_str(MsgType t) {
 inline std::string msg_type_str(uint8_t t) {
   return msg_type_str(static_cast<MsgType>(t));
 }
-
-} // namespace dfg::protocol

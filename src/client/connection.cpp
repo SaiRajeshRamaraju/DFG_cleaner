@@ -1,7 +1,7 @@
 #include "connection.hpp"
 #include "../network/rpc.hpp"
 #include "../network/socket_io.hpp"
-
+#include "../utils/sha256.hpp"
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <vector>
 
-using namespace dfg::protocol;
 using namespace dfg::net;
 
 // only used by user connection
@@ -53,6 +52,7 @@ bool read_response_payload(int fd, const MessageHeader &hdr, std::string &out) {
 int client::connect_to(const std::string &host, int port) {
   int fd = ::socket(AF_INET, SOCK_STREAM, 0);
   if (fd < 0) {
+    std::cerr << "Server Ping failed" << std::endl;
     std::cerr << "[Client] socket(): " << std::strerror(errno) << "\n";
     return -1;
   }
@@ -149,6 +149,11 @@ int client::file_download(const std::string &hex_hash,
 
 int client::file_upload(const std::string &file, const std::string &server_ip,
                         int port) {
+
+  int fd = connect_to(server_ip, port);
+  if (fd < 0)
+    return 1;
+
   std::ifstream ifs(file, std::ios::binary | std::ios::ate);
   if (!ifs) {
     std::cerr << "[Client] cannot open file: " << file << "\n";
@@ -168,10 +173,6 @@ int client::file_upload(const std::string &file, const std::string &server_ip,
 
   std::cerr << "[Client] uploading " << file << " (" << data.size()
             << " bytes)\n";
-
-  int fd = connect_to(server_ip, port);
-  if (fd < 0)
-    return 1;
 
   auto hdr =
       make_header(MsgType::UPLOAD_CHUNK, static_cast<uint64_t>(data.size()));

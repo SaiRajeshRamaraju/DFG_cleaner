@@ -48,8 +48,8 @@ int main(int argc, char **argv) {
       return client::file_upload(file, host, port);
     else
       return client::file_download(file, host, port);
+  } else if (action == "ping") {
+    client::ping(host, port);
   }
-
-  client::ping(host, port);
-  return EXIT_SUCCESS;
+  return 0;
 }
